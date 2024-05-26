@@ -36,7 +36,7 @@ onMounted(() => {
     // Compute light intensity at each vertex
     const vertexNormals = cube.geometry.attributes.normal.array;
     const vertexPositions = cube.geometry.attributes.position.array;
-    const lightIntensity = new Float32Array(vertexPositions.length / 3);
+    const lightIntensity = new Float32Array(cube.geometry.attributes.position.count);
 
     for (let i = 0, len = vertexPositions.length; i < len; i += 3) {
         const normal = new THREE.Vector3(vertexNormals[i], vertexNormals[i + 1], vertexNormals[i + 2]);

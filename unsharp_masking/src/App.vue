@@ -3,16 +3,19 @@ import RegularScene from './components/RegularScene.vue';
 import UnsharpMasking from './components/UnsharpMasking.vue';
 import VertexTexture from './components/texture_tests/VertexTexture.vue';
 import ExampleTexture from './components/texture_tests/ExampleTexture.vue';
+
+import PingPong from './components/texture_tests/PingPong.vue';
 </script>
 
 <template>
-  <div class="container">
+  <!-- <div class="container">
     <RegularScene class="half-width"/>
     <UnsharpMasking class="half-width"/>
-  </div>
-  <!-- <div class="container">
-    <VertexTexture />
   </div> -->
+  <div class="container">
+    <!-- <VertexTexture /> -->
+    <PingPong />
+  </div>
 </template>
 
 <style>
