@@ -12,78 +12,101 @@ onMounted(() => {
     const w = 1024;
     const h = 1024;
 
-    // Scene setup
+    // Scene
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0xf1f1f1);
-
-    // Camera setup
+    
+    // Camera
     const camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 10000);
-    camera.position.set(0, 0, 20);
+    camera.position.set(0, 0, 50);
 
-    // Renderer setup
+    // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(w, h);
     container.value.appendChild(renderer.domElement);
 
-    // Light setup
+    // Light
     const light = new THREE.DirectionalLight(0xffffff, 1.0);
     light.position.set(5, 5, 5);
     scene.add(light);
 
-    const options = {
+    // --------------- Define texture of random values --------------- 
+    const size = 32;
+    const data = new Uint8Array(size * size * 4);
+    for (let i = 0; i < data.length; i++) {
+        data[i] = Math.random() * 255;
+    }
+
+    const initialTexture = new THREE.DataTexture(data, size, size, THREE.RGBAFormat);
+    initialTexture.needsUpdate = true;
+
+    // --------------- Define render targets ---------------
+    const renderTargetOptions = {
         minFilter: THREE.NearestFilter,
         magFilter: THREE.NearestFilter,
         format: THREE.RGBAFormat,
-        type: THREE.FloatType
+        type: THREE.UnsignedByteType,
+        stencilBuffer: false,
+        depthBuffer: false
     };
+    const rt1 = new THREE.WebGLRenderTarget(size, size, renderTargetOptions);
+    const rt2 = new THREE.WebGLRenderTarget(size, size, renderTargetOptions);
+    
+    // --------------- Define Plane ---------------
+    const planeGeometry = new THREE.PlaneGeometry(50, 50);
+    const materialUsingInitialTexture = new THREE.ShaderMaterial({
+        uniforms: {
+            tex: { value: initialTexture }
+        },
+        vertexShader: `
+            varying vec2 vUv;
+            
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `,
+        fragmentShader: `
+            uniform sampler2D tex;
+            varying vec2 vUv;
+            
+            void main() {
+                vec4 texel = texture2D(tex, vUv);
+                gl_FragColor = vec4(texel.rgb, 0.9);
+            }
+        `
+    });
 
-    // Create two textures
-    const textureA = new THREE.WebGLRenderTarget(w, h, options);
-    const textureB = new THREE.WebGLRenderTarget(w, h, options);
-
-    const material = new THREE.MeshBasicMaterial({ map: textureA.texture });
-    const geometry = new THREE.PlaneGeometry(2, 2);
-    const plane = new THREE.Mesh(geometry, material);
+    const plane = new THREE.Mesh(planeGeometry, materialUsingInitialTexture);
     scene.add(plane);
 
-    let currentRenderTarget = textureA;
-    let nextRenderTarget = textureB;
+    // --------------- PingPong ---------------
+    // Render the scene to first render target
+    renderer.setRenderTarget(rt1);
+    renderer.render(scene, camera);
 
-    let swapCount = 0;
-    const maxSwaps = 20;
+    // Update the material of the plane to use first render target texture
+    plane.material.uniforms.tex.value = rt1.texture;
+    plane.material.needsUpdate = true;
 
-    function render() {
-        if (swapCount >= maxSwaps) {
-            // console.log("Completed 20 swaps.");
-            return;
-        }
+    // Render the scene to second render target
+    renderer.setRenderTarget(rt2);
+    renderer.render(scene, camera);
 
-        // Swap the render targets
-        let temp = currentRenderTarget;
-        currentRenderTarget = nextRenderTarget;
-        nextRenderTarget = temp;
+    // Update the material of the plane to use second render target texture
+    plane.material.uniforms.tex.value = rt2.texture;
+    plane.material.needsUpdate = true;
 
-        // Render to the current render target
-        renderer.setRenderTarget(currentRenderTarget);
-        renderer.clear();
-        renderer.render(scene, camera);
-
-        // Display the updated texture on the plane
-        plane.material.map = currentRenderTarget.texture;
-
-        // Render to screen
-        renderer.setRenderTarget(null);
-        renderer.render(scene, camera);
-
-        // Increment swap count and log
-        swapCount++;
-        // console.log(`Swap ${swapCount}: Current texture displayed.`);
-
-        requestAnimationFrame(render);
-    }
-
-    render();
-
-
+    // Reset the render target to null to render to the canvas
+    renderer.setRenderTarget(null);
+    renderer.render(scene, camera);
 });
+
 </script>
+
+<style>
+.container {
+    width: 750px;
+    height: 750px;
+}
+</style>
