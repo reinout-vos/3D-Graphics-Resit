@@ -83,8 +83,12 @@ onMounted(() => {
     const firstpassRt = new THREE.WebGLRenderTarget(w, h, renderTargetOptions);
 
 
+    // ----- Second pass(es): Grab the light intensity texture and smooth
+    // TODO: Compute smoothed texture (now stored in firstpassRT.texture)
 
-    // ----- TODO: Compute smoothed texture (now stored in rt1.texture)
+    // TODO: First texture stores at texel i the sum of all valences before vertex vi.
+    // A second texture stores the 1-rings for all vertices as a concatenation of the individual indices.
+
     // Define two render targets for pingponging
     const rt1 = new THREE.WebGLRenderTarget(w, h, renderTargetOptions);
     const rt2 = new THREE.WebGLRenderTarget(w, h, renderTargetOptions);
@@ -94,7 +98,8 @@ onMounted(() => {
 
 
     // ----- Final pass: Render the texture to a plane
-    const secondPassMaterial = new THREE.ShaderMaterial({
+    // TODO: Read the smoothed texture and compute unsharp masking 
+    const finalPassMaterial = new THREE.ShaderMaterial({
         uniforms: {
             tex: { value: activeRt.texture },
         },
@@ -119,7 +124,7 @@ onMounted(() => {
 
     // Render final scene to plane
     const planeGeometry = new THREE.PlaneGeometry(5, 5);
-    const plane = new THREE.Mesh(planeGeometry, secondPassMaterial);
+    const plane = new THREE.Mesh(planeGeometry, finalPassMaterial);
     scene.add(plane);
 
     function animate() {
