@@ -35,25 +35,8 @@ onMounted(() => {
     const pointLightHelper = new THREE.PointLightHelper(light, sphereSize, color);
     scene.add(pointLightHelper);
 
-    // Render target options
-    const renderTargetOptions = {
-        minFilter: THREE.LinearFilter,
-        magFilter: THREE.LinearFilter,
-        format: THREE.RGBAFormat,
-        type: THREE.UnsignedByteType,
-        stencilBuffer: false,
-        depthBuffer: false
-    };
 
-    // Define two render targets for pingponging
-    const rt1 = new THREE.WebGLRenderTarget(w, h, renderTargetOptions);
-    const rt2 = new THREE.WebGLRenderTarget(w, h, renderTargetOptions);
-
-    let activeRt = rt1;
-    let inactiveRt = rt2;
-
-
-    // First pass: Render the cube to a texture with the vertex shader computing light intensity
+    // ----- First pass: Render the cube to a texture with the vertex shader computing light intensity
     const firstPassScene = new THREE.Scene();
     firstPassScene.background = new THREE.Color(0x8f8181);
     const firstPassCamera = new THREE.PerspectiveCamera(75, w / h, 0.1, 10000);
@@ -87,9 +70,30 @@ onMounted(() => {
     const cube = new THREE.Mesh(cubeGeometry, texturedMaterial);
     firstPassScene.add(cube);
 
-    // TODO: Compute smoothed texture (now stored in rt1.texture)
+    // Render target options
+    const renderTargetOptions = {
+        minFilter: THREE.LinearFilter,
+        magFilter: THREE.LinearFilter,
+        format: THREE.RGBAFormat,
+        type: THREE.UnsignedByteType,
+        stencilBuffer: false,
+        depthBuffer: false
+    };
 
-    // Second pass: Render the texture to a plane
+    const firstpassRt = new THREE.WebGLRenderTarget(w, h, renderTargetOptions);
+
+
+
+    // ----- TODO: Compute smoothed texture (now stored in rt1.texture)
+    // Define two render targets for pingponging
+    const rt1 = new THREE.WebGLRenderTarget(w, h, renderTargetOptions);
+    const rt2 = new THREE.WebGLRenderTarget(w, h, renderTargetOptions);
+
+    let activeRt = rt1;
+    let inactiveRt = rt2;
+
+
+    // ----- Final pass: Render the texture to a plane
     const secondPassMaterial = new THREE.ShaderMaterial({
         uniforms: {
             tex: { value: activeRt.texture },
@@ -123,21 +127,27 @@ onMounted(() => {
         cube.rotation.x += 0.01;
         cube.rotation.y += 0.01;
 
-        // First pass
-        renderer.setRenderTarget(activeRt);
+        // First pass: create texture of light intensity values
+        renderer.setRenderTarget(firstpassRt);
         renderer.render(firstPassScene, firstPassCamera);
 
-        
-        // Second pass
-        activeRt = rt2
+        // Second pass(es): smoothen the light intensity texture
+        for (let i = 0; i < 10; i++) {
+            // Render the scene to active render target
+            renderer.setRenderTarget(activeRt);
+            renderer.render(firstPassScene, firstPassCamera);
 
-        plane.material.uniforms.tex.value = activeRt.texture;
-        plane.material.needsUpdate = true;
+            // Update the material of the plane to use active render target texture
+            plane.material.uniforms.tex.value = activeRt.texture;
+            plane.material.needsUpdate = true;
+            
+            // Swap active and inactive render targets
+            let temp = activeRt;
+            activeRt = inactiveRt;
+            inactiveRt = temp;
+        }
 
-        renderer.setRenderTarget(activeRt);
-        renderer.render(firstPassScene, firstPassCamera);
-
-        // Second pass
+        // Final pass: compute unsharp masking and render to screen 
         renderer.setRenderTarget(null);
         renderer.render(scene, camera);
     }
