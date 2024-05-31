@@ -5,6 +5,8 @@ import VertexTexture from './components/texture_tests/VertexTexture.vue';
 import ExampleTexture from './components/texture_tests/ExampleTexture.vue';
 
 import PingPong from './components/texture_tests/PingPong.vue';
+
+import Test from './components/texture_tests/Test.vue';
 </script>
 
 <template>
@@ -14,7 +16,8 @@ import PingPong from './components/texture_tests/PingPong.vue';
   </div> -->
   <div class="container">
     <!-- <VertexTexture /> -->
-    <PingPong />
+    <!-- <PingPong /> -->
+    <Test />
   </div>
 </template>
 
