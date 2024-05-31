@@ -158,7 +158,7 @@ onMounted(() => {
 
 <style>
 .container {
-    width: 750px;
-    height: 750px;
+    width: 1024px;
+    height: 1024px;
 }
 </style>
