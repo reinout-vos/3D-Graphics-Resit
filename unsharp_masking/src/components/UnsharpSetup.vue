@@ -5,8 +5,21 @@
 <script setup>
 import * as THREE from 'three';
 import { onMounted, ref } from 'vue';
-
+import {OBJLoader} from 'three/addons/loaders/OBJLoader.js';
+import {MTLLoader} from 'three/addons/loaders/MTLLoader.js';
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
+// Scene container
 const container = ref(null);
+
+// Render target options
+const renderTargetOptions = {
+    minFilter: THREE.LinearFilter,
+    magFilter: THREE.LinearFilter,
+    format: THREE.RGBAFormat,
+    type: THREE.UnsignedByteType,
+    stencilBuffer: false,
+    depthBuffer: false
+};
 
 onMounted(() => {
     const w = 1024;
@@ -26,7 +39,7 @@ onMounted(() => {
 
     // Light
     const light = new THREE.PointLight(0xffffff, 1, 100);
-    light.position.set(1, 0, 1);
+    light.position.set(1, -0.2, 1);
     scene.add(light);
 
     // Point Light Helper
@@ -39,11 +52,14 @@ onMounted(() => {
     // ----- First pass: Render the cube to a texture with the vertex shader computing light intensity
     const firstPassScene = new THREE.Scene();
     firstPassScene.background = new THREE.Color(0x8f8181);
+    
     const firstPassCamera = new THREE.PerspectiveCamera(75, w / h, 0.1, 10000);
     firstPassCamera.position.z = 5;
 
-    const cubeGeometry = new THREE.BoxGeometry();
-    const texturedMaterial = new THREE.ShaderMaterial({
+    const firstpassRt = new THREE.WebGLRenderTarget(w, h, renderTargetOptions);
+    
+    // Assign light intensity shader
+    const shaderMaterial = new THREE.ShaderMaterial({
         uniforms: {
             lightDirection: { value: light.position.clone().normalize() },
         },
@@ -66,28 +82,83 @@ onMounted(() => {
             }
         `,
     });
+    
+    let cube;
 
-    const cube = new THREE.Mesh(cubeGeometry, texturedMaterial);
-    firstPassScene.add(cube);
+    const manager = new THREE.LoadingManager();
+    const mtlLoader = new MTLLoader(manager);
+    const objLoader = new OBJLoader(manager);
 
-    // Render target options
-    const renderTargetOptions = {
-        minFilter: THREE.LinearFilter,
-        magFilter: THREE.LinearFilter,
-        format: THREE.RGBAFormat,
-        type: THREE.UnsignedByteType,
-        stencilBuffer: false,
-        depthBuffer: false
-    };
-
-    const firstpassRt = new THREE.WebGLRenderTarget(w, h, renderTargetOptions);
-
+    mtlLoader.load('meshes/cube.mtl', (mtl) => {
+        mtl.preload();
+        objLoader.setMaterials(mtl);
+        objLoader.load('meshes/cube.obj', (root) => {
+            root.traverse((child) => {
+                if (child.isMesh) {
+                    child.material = shaderMaterial;
+                    cube = child;
+                }
+            });
+            firstPassScene.add(cube);
+        });
+    });
 
     // ----- Second pass(es): Grab the light intensity texture and smooth
-    // TODO: Compute smoothed texture (now stored in firstpassRT.texture)
-
     // TODO: First texture stores at texel i the sum of all valences before vertex vi.
     // A second texture stores the 1-rings for all vertices as a concatenation of the individual indices.
+    
+    function computeVertexNeighbors(geometry) {
+        if (!geometry.index) {
+            geometry = BufferGeometryUtils.mergeVertices(geometry);
+        }
+
+        const index = geometry.index.array;
+        const position = geometry.attributes.position.array;
+        const vertexCount = position.length / 3;
+        const neighbors = Array(vertexCount).fill().map(() => new Set());
+
+        // Iterate over each face (triangle)
+        for (let i = 0; i < index.length; i += 3) {
+            const a = index[i];
+            const b = index[i + 1];
+            const c = index[i + 2];
+
+            // Add neighbors for vertex a
+            neighbors[a].add(b);
+            neighbors[a].add(c);
+
+            // Add neighbors for vertex b
+            neighbors[b].add(a);
+            neighbors[b].add(c);
+
+            // Add neighbors for vertex c
+            neighbors[c].add(a);
+            neighbors[c].add(b);
+        }
+
+        // Count neighbors for each vertex
+        const neighborCounts = neighbors.map(neighborSet => neighborSet.size);
+
+        return neighborCounts;
+    }
+
+    // Continue after the mesh is loaded
+    manager.onLoad = function () {
+        // TODO: correct this
+        const valences = computeVertexNeighbors(cube.geometry);
+
+        const valenceSum = new Float32Array(cube.geometry.attributes.position.count);
+        valenceSum[0] = valences[0];
+        for (let i = 1; i < valences.length; i++) {
+            valenceSum[i] = valenceSum[i - 1] + valences[i];
+        }
+
+        const valenceSumTexture = new THREE.DataTexture(valenceSum, valences.length, 1, THREE.RedFormat, THREE.FloatType);
+        valenceSumTexture.needsUpdate = true;
+    };
+
+    // TODO: Compute smoothed texture (now stored in firstpassRT.texture)
+
 
     // Define two render targets for pingponging
     const rt1 = new THREE.WebGLRenderTarget(w, h, renderTargetOptions);
@@ -129,15 +200,18 @@ onMounted(() => {
 
     function animate() {
         requestAnimationFrame(animate);
-        cube.rotation.x += 0.01;
-        cube.rotation.y += 0.01;
+        
+        if (cube) {
+            cube.rotation.x += 0.01;
+            cube.rotation.y += 0.01;
+        }
 
         // First pass: create texture of light intensity values
         renderer.setRenderTarget(firstpassRt);
         renderer.render(firstPassScene, firstPassCamera);
 
         // Second pass(es): smoothen the light intensity texture
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 1; i++) {
             // Render the scene to active render target
             renderer.setRenderTarget(activeRt);
             renderer.render(firstPassScene, firstPassCamera);
