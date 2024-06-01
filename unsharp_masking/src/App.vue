@@ -1,10 +1,5 @@
 <script setup>
 import RegularScene from './components/RegularScene.vue';
-import VertexTexture from './components/texture_tests/VertexTexture.vue';
-import ExampleTexture from './components/texture_tests/ExampleTexture.vue';
-
-import PingPong from './components/texture_tests/PingPong.vue';
-
 import UnsharpMasking from './components/UnsharpMasking.vue';
 </script>
 
@@ -13,11 +8,6 @@ import UnsharpMasking from './components/UnsharpMasking.vue';
     <RegularScene class="half-width"/>
     <UnsharpMasking class="half-width"/>
   </div>
-  <!-- <div class="container"> -->
-    <!-- <VertexTexture /> -->
-    <!-- <PingPong /> -->
-    <!-- <UnsharpMasking /> -->
-  <!-- </div> -->
 </template>
 
 <style>
