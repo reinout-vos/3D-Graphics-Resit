@@ -6,13 +6,17 @@
 import * as THREE from 'three';
 import { onMounted, ref } from 'vue';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 import { GUI } from 'dat.gui'
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
 
 // Scene container
 const container = ref(null);
 
 // Mesh
 let mesh;
+const meshPath = "meshes/dragon2.gltf"
 
 // Render target options
 const renderTargetOptions = {
@@ -21,21 +25,8 @@ const renderTargetOptions = {
     format: THREE.RGBAFormat,
     type: THREE.UnsignedByteType,
     stencilBuffer: false,
-    depthBuffer: false
+    depthBuffer: true
 };
-
-// GUI
-const params = {
-    lambda: 1.0,
-    sigma: 1.0,
-};
-
-const gui = new GUI()
-const unsharpFolder = gui.addFolder('3D Unsharp Masking')
-unsharpFolder.open();
-unsharpFolder.add(params, 'lambda', 0.0, 5.0).name('Lambda');
-unsharpFolder.add(params, 'sigma', 0, 20).step(1).name('Sigma');
-
 
 onMounted(() => {
     const w = container.value.offsetHeight;
@@ -68,13 +59,27 @@ onMounted(() => {
     const manager = new THREE.LoadingManager();
 
     const loader = new GLTFLoader(manager);
-    loader.load('meshes/cube.gltf', function (gltf) {
+    loader.load(meshPath, function (gltf) {
         const scene = gltf.scene;
         mesh = scene.children[0];
     });
 
     // Continue after the mesh is loaded
     manager.onLoad = function () {
+
+        // Set up GUI
+        const params = {
+            lambda: 1.0,
+            sigma: 1.0,
+        };
+
+        const gui = new GUI()
+        const unsharpFolder = gui.addFolder('3D Unsharp Masking')
+        unsharpFolder.open();
+        unsharpFolder.add(params, 'lambda', 0.0, 5.0).name('Lambda').onChange(updateUniforms);
+        unsharpFolder.add(params, 'sigma', 0, 20).step(1).name('Sigma').onChange(updateUniforms);
+
+        
         // ----- First pass: Render the mesh (now cube) to a texture with the vertex shader computing light intensity
         const firstPassScene = new THREE.Scene();
         firstPassScene.background = new THREE.Color(0x8f8181);
@@ -83,6 +88,9 @@ onMounted(() => {
         firstPassCamera.position.z = 5;
 
         const firstpassRt = new THREE.WebGLRenderTarget(w, h, renderTargetOptions);
+
+        const controls = new OrbitControls( firstPassCamera, renderer.domElement );
+
         
         // Assign light intensity shader
         const shaderMaterial = new THREE.ShaderMaterial({
@@ -142,6 +150,10 @@ onMounted(() => {
             }
 
             return neighbors;
+        }
+
+        if (!mesh.geometry.index) {
+            mesh.geometry = BufferGeometryUtils.mergeVertices(mesh.geometry);
         }
 
         const neighbors = computeVertexNeighbors(mesh.geometry)
@@ -256,13 +268,18 @@ onMounted(() => {
         const plane = new THREE.Mesh(planeGeometry, finalPassMaterial);
         scene.add(plane);
 
+        function updateUniforms() {
+            finalPassMaterial.uniforms.lambda.value = params.lambda;
+            laplacianMaterial.needsUpdate = true;
+        }
+
         // Animation loop
         function animate() {
             requestAnimationFrame(animate);
             
             if (mesh) {
-                mesh.rotation.x += 0.01;
-                mesh.rotation.y += 0.01;
+                // mesh.rotation.z += 0.001;
+                // mesh.rotation.y += 0.01;
             }
 
             // First pass: create texture of light intensity values
@@ -283,6 +300,8 @@ onMounted(() => {
                 activeRt = inactiveRt;
                 inactiveRt = temp;
             }
+
+            controls.update();
 
             // Final pass: compute unsharp masking and render to screen 
             finalPassMaterial.uniforms.smoothedTexture.value = activeRt.texture;

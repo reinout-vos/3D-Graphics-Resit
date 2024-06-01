@@ -9,14 +9,15 @@ import UnsharpMasking from './components/UnsharpMasking.vue';
 </script>
 
 <template>
-  <!-- <div class="container">
-    <RegularScene class="half-width"/>
-  </div> -->
   <div class="container">
+    <RegularScene class="half-width"/>
+    <UnsharpMasking class="half-width"/>
+  </div>
+  <!-- <div class="container"> -->
     <!-- <VertexTexture /> -->
     <!-- <PingPong /> -->
-    <UnsharpMasking />
-  </div>
+    <!-- <UnsharpMasking /> -->
+  <!-- </div> -->
 </template>
 
 <style>
