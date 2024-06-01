@@ -5,7 +5,7 @@ import ExampleTexture from './components/texture_tests/ExampleTexture.vue';
 
 import PingPong from './components/texture_tests/PingPong.vue';
 
-import UnsharpSetup from './components/UnsharpSetup.vue';
+import UnsharpMasking from './components/UnsharpMasking.vue';
 </script>
 
 <template>
@@ -15,7 +15,7 @@ import UnsharpSetup from './components/UnsharpSetup.vue';
   <div class="container">
     <!-- <VertexTexture /> -->
     <!-- <PingPong /> -->
-    <UnsharpSetup />
+    <UnsharpMasking />
   </div>
 </template>
 
