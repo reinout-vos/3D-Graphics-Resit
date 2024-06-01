@@ -32,6 +32,7 @@ const params = {
 
 const gui = new GUI()
 const unsharpFolder = gui.addFolder('3D Unsharp Masking')
+unsharpFolder.open();
 unsharpFolder.add(params, 'lambda', 0.0, 5.0).name('Lambda');
 unsharpFolder.add(params, 'sigma', 0, 20).step(1).name('Sigma');
 
