@@ -1,12 +1,15 @@
 <script setup>
 import RegularScene from './components/RegularScene.vue';
-import UnsharpMasking from './components/UnsharpMasking.vue';
+// import UnsharpMasking from './components/UnsharpMasking.vue';
+
+import Test from './components/Test.vue';
 </script>
 
 <template>
   <div class="container">
     <RegularScene class="half-width"/>
-    <UnsharpMasking class="half-width"/>
+    <Test class="half-width"/>
+    <!-- <UnsharpMasking class="half-width"/> -->
   </div>
 </template>
 
