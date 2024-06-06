@@ -1,7 +1,22 @@
-# Vue 3 + Vite
+# Runnning the project:
+Make sure you have node / npm installed (https://nodejs.org/en).
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Then go to the 'unsharp_masking' directory:
+```bash
+cd unsharp_masking
+```
 
-## Recommended IDE Setup
+Install the required npm packages:
+```bash
+npm install
+```
 
-- [VS Code](https://code.visualstudio.com/) + [Vue - Official](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (previously Volar) and disable Vetur
+Run the project:
+```bash
+npm run dev
+```
+
+You should now be able to see the webpage at:
+```
+http://localhost:5173/
+```
