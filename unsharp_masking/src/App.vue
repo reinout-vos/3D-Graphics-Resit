@@ -2,15 +2,15 @@
 import RegularScene from './components/RegularScene.vue';
 // import UnsharpMasking from './components/UnsharpMasking.vue';
 
-import Test from './components/Test.vue';
+import PreProcess from './components/PreProcess.vue'
 </script>
 
 <template>
-  <div class="container">
+  <!-- <div class="container">
     <RegularScene class="half-width"/>
-    <Test class="half-width"/>
-    <!-- <UnsharpMasking class="half-width"/> -->
-  </div>
+    <UnsharpMasking class="half-width"/>
+  </div> -->
+  <PreProcess />
 </template>
 
 <style>

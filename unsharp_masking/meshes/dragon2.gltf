@@ -30,9 +30,9 @@
 			"name":"DragonMat",
 			"pbrMetallicRoughness":{
 				"baseColorFactor":[
-					0.6399999856948853,
-					0.5287860035896301,
-					0.20815099775791168,
+					1,
+					1,
+					1,
 					1
 				],
 				"metallicFactor":0,
