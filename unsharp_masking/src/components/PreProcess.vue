@@ -36,7 +36,6 @@ function calculateVertexIntensities(geometry, lightPosition) {
         const vertex = new THREE.Vector3(positions[i], positions[i + 1], positions[i + 2]);
         const normal = new THREE.Vector3(normals[i], normals[i + 1], normals[i + 2]).normalize();
         const lightDir = new THREE.Vector3().subVectors(lightPosition, vertex).normalize();
-        // const lightDir = lightPosition.sub(vertex).normalize();
         const intensity = Math.max(lightDir.dot(normal), 0);
         intensities[i / 3] = intensity;
     }
@@ -93,9 +92,16 @@ onMounted(() => {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x8f8181);
 
+    // Axes
+    const axesHelper = new THREE.AxesHelper( 5 );
+    scene.add( axesHelper );
+
     // Camera
     const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 10000);
-    camera.position.z = 6;
+    // camera.position.set(0, 0, 0);
+    camera.position.set(0.06, -1.6, -0.8);
+    // Rotate the camera
+    // camera.rotateX(-Math.PI / 4);
 
     // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -109,8 +115,8 @@ onMounted(() => {
     // light.position.set(1, 1, 1.5);
     // scene.add(light);
 
-    const light = new THREE.PointLight(0xffffff, 1, 100);
-    light.position.set(1, 1, 1.5);
+    const light = new THREE.PointLight(0xffffff, 1, 0);
+    light.position.set(5, -0.6, -5.1);
     scene.add(light);
 
     // Point Light Helper
@@ -125,9 +131,14 @@ onMounted(() => {
     loader.load(meshPath, function (gltf) {
         const meshScene = gltf.scene;
         mesh = meshScene.children[0];
-        // mesh.position.set(0,-0.5,0);
+        // Apply the mesh transformations
+        
+
+        mesh.position.set(0, 0, 0);
         // mesh.scale.set(2,2,2);
         // mesh.rotation.z = Math.PI / 2;
+        // Rotate the mesh
+        // mesh.rotateX(-Math.PI / 2);
 
         scene.add(mesh);
 
@@ -159,8 +170,7 @@ onMounted(() => {
                     float smoothed = vSmoothed;
                     float lambda = 0.5;
                     vec3 mask = vec3(original + lambda * (original - smoothed));
-                    // gl_FragColor = vec4(mask, 1.0);
-                    gl_FragColor = vec4(vec3(vIntensity), 1.0);
+                    gl_FragColor = vec4(mask, 1.0);
                 }
             `
         });
