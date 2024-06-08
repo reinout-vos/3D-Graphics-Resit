@@ -1,7 +1,5 @@
 <script setup>
 import RegularScene from './components/RegularScene.vue';
-// import UnsharpMasking from './components/UnsharpMasking.vue';
-
 import PreProcess from './components/PreProcess.vue'
 </script>
 
