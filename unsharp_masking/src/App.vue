@@ -6,11 +6,10 @@ import PreProcess from './components/PreProcess.vue'
 </script>
 
 <template>
-  <!-- <div class="container">
+  <div class="container">
     <RegularScene class="half-width"/>
-    <UnsharpMasking class="half-width"/>
-  </div> -->
-  <PreProcess />
+    <PreProcess class="half-width"/>
+  </div>
 </template>
 
 <style>
